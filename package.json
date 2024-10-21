@@ -1,0 +1,13 @@
+{
+  "name": "open-update-password",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.mjs",
+  "scripts": {
+    "run": "node index.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.675.0",
+    "bcryptjs": "^2.4.3"
+  }
+}
