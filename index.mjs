@@ -1,4 +1,5 @@
-import {DynamoDBClient, ScanCommand, UpdateItemCommand} from "@aws-sdk/client-dynamodb";
+import {DynamoDBClient, UpdateItemCommand} from "@aws-sdk/client-dynamodb";
+import bcrypt from 'bcryptjs';
 
 const region = 'us-east-2'
 
@@ -10,8 +11,8 @@ export const handler = async (event) => {
     try {
         let user = event.requestContext.authorizer;
 
-        const {name, email, address} = JSON.parse(event.body);
-        if (!name || !email || !address) {
+        const {currentPassword, password} = JSON.parse(event.body);
+        if (!currentPassword || !password) {
             return {
                 statusCode: 400,
                 headers: {
@@ -23,18 +24,7 @@ export const handler = async (event) => {
             };
         }
 
-        const scanParams = {
-            TableName: DYNAMO_TABLE_NAME,
-            FilterExpression: 'email = :email AND id <> :id',
-            ExpressionAttributeValues: {
-                ':email': {S: email},
-                ':id': {S: user.id}
-            }
-        };
-
-        let data = await dynamoDbClient.send(new ScanCommand(scanParams));
-        console.log(data)
-        if (data.Count > 0) {
+        if (!bcrypt.compareSync(currentPassword, user.password)) {
             return {
                 statusCode: 200,
                 headers: {
@@ -42,7 +32,7 @@ export const handler = async (event) => {
                     'Access-Control-Allow-Methods': 'POST',
                     'Access-Control-Allow-Headers': 'Content-Type',
                 },
-                body: JSON.stringify({errors: [{field: "email", message: "Email already used."}]}),
+                body: JSON.stringify({errors: [{field: "currentPassword", message: "Incorrect password."}]}),
             };
         }
 
@@ -51,29 +41,18 @@ export const handler = async (event) => {
             Key: {
                 id: {S: user.id}
             },
-            UpdateExpression: 'SET #n = :name, email = :email, address = :address',
+            UpdateExpression: 'SET #n = :password',
             ExpressionAttributeNames: {
-                '#n': 'name'
+                '#n': 'password'
             },
             ExpressionAttributeValues: {
-                ':name': {S: name},
-                ':email': {S: email},
-                ':address': {S: address}
+                ':password': {S: bcrypt.hashSync(password, 10)},
             },
             ReturnValues: 'ALL_NEW'
         };
 
-        data = await dynamoDbClient.send(new UpdateItemCommand(updateParams));
+        const data = await dynamoDbClient.send(new UpdateItemCommand(updateParams));
         console.log(data)
-
-        user = {
-            id: data.Attributes.id.S,
-            name: data.Attributes.name.S,
-            email: data.Attributes.email.S,
-            address: data.Attributes.address.S,
-            imageUrl: data.Attributes.imageUrl.S,
-            createdOn: data.Attributes.createdOn.S,
-        };
 
         return {
             statusCode: 200,
@@ -83,12 +62,11 @@ export const handler = async (event) => {
                 'Access-Control-Allow-Headers': 'Content-Type',
             },
             body: JSON.stringify({
-                error: [],
-                user
+                errors: []
             }),
         };
     } catch (err) {
-        console.error('Error updating user profile:', err);
+        console.error('Error updating user password:', err);
 
         return {
             statusCode: 500,
@@ -98,7 +76,7 @@ export const handler = async (event) => {
                 'Access-Control-Allow-Headers': 'Content-Type',
             },
             body: JSON.stringify({
-                message: 'Failed to update user profile'
+                message: 'Failed to update user password'
             }),
         };
     }
