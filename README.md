@@ -3,6 +3,8 @@
 This AWS Lambda function provides a secure mechanism for users to update their password. It integrates DynamoDB to store
 user data and bcrypt for secure password hashing and validation. Here's how the function works and why it’s important:
 
+![Screenshot 2024-10-22 at 10.04.39 PM.png](screenshots/apigateway/Screenshot%202024-10-22%20at%2010.04.39%E2%80%AFPM.png)
+
 ## Key Highlights
 
 - **Password Validation with Bcrypt**:
@@ -39,8 +41,17 @@ their current password is valid. By utilizing bcrypt for password hashing and Dy
 helps protect user data from unauthorized access. It’s an essential part of any modern, security-focused application,
 ensuring that password management is handled with care and precision.
 
+### What's next ?
 
+Check the [main](https://github.com/longbowou/open-frontend) repository this one is part of.
 
+## Screenshot
+
+![Screenshot 2024-10-22 at 9.49.58 PM.png](screenshots/lambda/Screenshot%202024-10-22%20at%209.49.58%E2%80%AFPM.png)
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
 
 
 
